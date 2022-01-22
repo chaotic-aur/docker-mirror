@@ -1,0 +1,48 @@
+version: "3.7"
+services:
+  nginx:
+    container_name: nginx
+    restart: unless-stopped
+    hostname: ${DOMAIN_NAME:?err}
+    volumes:
+      - './repo:/var/lib/nginx/html/repo/chaotic-aur:ro'
+      - './data/acme-webroot:/var/lib/nginx/html/acme:ro'
+      - './data/letsencrypt/etc:/etc/letsencrypt:ro'
+      - './preset/nginx.conf:/etc/nginx/nginx.conf:ro'
+      - './preset/conf.d:/etc/nginx/conf.d:ro'
+    labels:
+      com.datadoghq.ad.check_names: '["nginx"]'
+      com.datadoghq.ad.init_configs: '[{}]'
+      com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
+    ports:
+      - '80:80'
+      - '443:443'
+    image: nginx
+
+  syncthing:
+    image: linuxserver/syncthing
+    container_name: syncthing
+    hostname: ${DOMAIN_NAME:?err}
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+        - './data/syncthing:/config'
+        - './repo:/repo'
+    ports:
+      - 8384:8384
+      - 22000:22000/tcp
+      - 22000:22000/udp
+      - 21027:21027/udp
+    restart: unless-stopped
+
+  certbot:
+    container_name: certbot
+    restart: always
+    volumes:
+      - './data/acme-webroot:/srv/http/webroot'
+      - './data/letsencrypt/etc:/etc/letsencrypt'
+      - './data/letsencrypt/var:/var/lib/letsencrypt'
+    image: certbot/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; sleep 10; while :; do certbot renew -w /srv/http/webroot/ --webroot; sleep 12h & wait $${!}; done;'"
