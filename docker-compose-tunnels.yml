@@ -35,6 +35,7 @@ services:
     container_name: cloudflared
     command: tunnel run --url http://nginx ${DOMAIN_NAME:?err}
     user: root
+    restart: unless-stopped
     volumes:
       - './data/cloudflared/etc:/etc/cloudflared'
       - './data/cloudflared/home:/root'
