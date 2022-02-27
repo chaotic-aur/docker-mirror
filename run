@@ -2,17 +2,37 @@
 
 set -e
 
+if [[ $EUID -ne 0 ]]; then
+    echo Run as root!
+    exit 1
+fi
+
 if [ ! -e ./.env ]; then
   read -p 'Domain that will serve the mirror: ' domain
-  read -p 'Your email address: ' email
   echo "DOMAIN_NAME=$domain" > ./.env
-  echo "EMAIL=$email" >> ./.env
+  read -p "Use cloudflare tunnels y/N " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]
+  then
+    USE_TUNNELS=true
+    echo "USE_TUNNELS=true" >> ./.env
+    echo "SSL_FILE=/dev/null" >> ./.env
+  else
+    read -p 'Your email address: ' email
+    echo "EMAIL=$email" >> ./.env
+  fi
 fi
 
 source .env
 
-if [ ! -e ./data/letsencrypt/etc/renewal/chaotic.conf ]; then
-  docker run -p 80:80 -p 443:443 -it --rm -v "$PWD/data/letsencrypt/etc:/etc/letsencrypt" -v "$PWD/data/letsencrypt/var:/var/lib/letsencrypt" certbot/certbot certonly --standalone --agree-tos --cert-name chaotic -n -m "$EMAIL" -d "$DOMAIN_NAME"
+if [ "$USE_TUNNELS" != "true" ]; then
+  if [ ! -e ./data/letsencrypt/etc/renewal/chaotic.conf ]; then
+    docker run -p 80:80 -p 443:443 -it --rm -v "$PWD/data/letsencrypt/etc:/etc/letsencrypt" -v "$PWD/data/letsencrypt/var:/var/lib/letsencrypt" certbot/certbot certonly --standalone --agree-tos --cert-name chaotic -n -m "$EMAIL" -d "$DOMAIN_NAME"
+  fi
+elif [ ! -e "./data/cloudflared/home/.cloudflared/cert.pem" ]; then
+  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared login
+  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared tunnel create $DOMAIN_NAME
+  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared tunnel route dns $DOMAIN_NAME $DOMAIN_NAME
 fi
 
 if [ ! -e ./repo ]; then
@@ -26,4 +46,8 @@ if [ ! -e ./data/syncthing/config.xml ]; then
   chown -R 1000:1000 ./data/syncthing
 fi
 
-docker-compose -f docker-compose.yml up -d
+if [ "$USE_TUNNELS" != "true" ]; then
+  docker-compose -f docker-compose.yml up -d
+else
+  docker-compose -f docker-compose-tunnels.yml up -d
+fi
