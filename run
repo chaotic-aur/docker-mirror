@@ -35,9 +35,16 @@ elif [ ! -e "./data/cloudflared/home/.cloudflared/cert.pem" ]; then
   docker-compose -f docker-compose-tunnels.yml run --rm cloudflared tunnel route dns $DOMAIN_NAME $DOMAIN_NAME
 fi
 
-if [ ! -e ./repo ]; then
-  mkdir -p ./repo/.stfolder
-  chown -R 1000:1000 ./repo
+if [ ! -e ./http-root/chaotic-aur ]; then
+  # Convert legacy
+  if [ -d ./repo ]; then
+    ./stop
+    mkdir ./http-root
+    mv ./repo ./http-root/chaotic-aur
+  else
+    mkdir -p ./http-root/chaotic-aur/.stfolder
+    chown -R 1000:1000 ./http-root/chaotic-aur/
+  fi
 fi
 
 if [ ! -e ./data/syncthing/config.xml ]; then

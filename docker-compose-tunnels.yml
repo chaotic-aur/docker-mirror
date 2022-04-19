@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     hostname: ${DOMAIN_NAME:?err}
     volumes:
-      - './repo:/var/lib/nginx/html/repo/chaotic-aur:ro'
+      - './http-root:/var/lib/nginx/html/http-root:ro'
       - './data/acme-webroot:/var/lib/nginx/html/acme:ro'
       - './data/letsencrypt/etc:/etc/letsencrypt:ro'
       - './preset/nginx.conf:/etc/nginx/nginx.conf:ro'
@@ -22,7 +22,7 @@ services:
       - TZ=Europe/London
     volumes:
         - './data/syncthing:/config'
-        - './repo:/repo'
+        - './http-root/chaotic-aur:/repo'
     ports:
       - 8384:8384
       - 22000:22000/tcp
@@ -31,7 +31,7 @@ services:
     restart: unless-stopped
 
   cloudflared:
-    image: cloudflare/cloudflared:2022.2.2
+    image: cloudflare/cloudflared:2022.4.1
     container_name: cloudflared
     command: tunnel run --url http://nginx ${DOMAIN_NAME:?err}
     user: root
