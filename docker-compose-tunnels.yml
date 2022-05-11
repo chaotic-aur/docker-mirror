@@ -24,14 +24,14 @@ services:
         - './data/syncthing:/config'
         - './http-root/chaotic-aur:/repo'
     ports:
-      - 8384:8384
+      - '127.0.0.1:8384:8384'
       - 22000:22000/tcp
       - 22000:22000/udp
       - 21027:21027/udp
     restart: unless-stopped
 
   cloudflared:
-    image: cloudflare/cloudflared:2022.4.1
+    image: cloudflare/cloudflared:2022.5.0
     container_name: cloudflared
     command: tunnel run --url http://nginx ${DOMAIN_NAME:?err}
     user: root
