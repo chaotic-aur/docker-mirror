@@ -7,5 +7,10 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-docker-compose -f docker-compose.yml down
-docker-compose -f docker-compose-tunnels.yml down
+if [ -e "./data/cloudflared/home/.cloudflared/cert.pem" ]; then
+    docker-compose -f docker-compose-tunnels.yml down
+    docker-compose -f docker-compose.yml down
+else
+    docker-compose -f docker-compose.yml down
+    docker-compose -f docker-compose-tunnels.yml down
+fi

@@ -31,8 +31,8 @@ if [ "$USE_TUNNELS" != "true" ]; then
   fi
 elif [ ! -e "./data/cloudflared/home/.cloudflared/cert.pem" ]; then
   docker-compose -f docker-compose-tunnels.yml run --rm cloudflared login
-  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared tunnel create $DOMAIN_NAME
-  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared tunnel route dns $DOMAIN_NAME $DOMAIN_NAME
+  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel create $DOMAIN_NAME
+  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel route dns $DOMAIN_NAME $DOMAIN_NAME
 fi
 
 if [ ! -e ./http-root/chaotic-aur ]; then
@@ -54,7 +54,9 @@ if [ ! -e ./data/syncthing/config.xml ]; then
 fi
 
 if [ "$USE_TUNNELS" != "true" ]; then
+  docker-compose -f docker-compose.yml pull
   docker-compose -f docker-compose.yml up -d
 else
+  docker-compose -f docker-compose-tunnels.yml pull
   docker-compose -f docker-compose-tunnels.yml up -d
 fi
