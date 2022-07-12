@@ -4,6 +4,7 @@
         <device id="ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY" introducedBy="">
             <encryptionPassword></encryptionPassword>
         </device>
+        <order>oldestFirst</order>
     </folder>
     <device id="ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY" name="builds.garudalinux.org" compression="metadata" introducer="true" skipIntroductionRemovals="false" introducedBy="">
         <address>dynamic</address>
