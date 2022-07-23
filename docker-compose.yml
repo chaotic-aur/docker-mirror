@@ -44,5 +44,5 @@ services:
       - './data/acme-webroot:/srv/http/webroot'
       - './data/letsencrypt/etc:/etc/letsencrypt'
       - './data/letsencrypt/var:/var/lib/letsencrypt'
-    image: certbot/certbot
+    image: certbot/certbot:${LETSENCRYPT_TAG:-latest}
     entrypoint: "/bin/sh -c 'trap exit TERM; sleep 10; while :; do certbot renew -w /srv/http/webroot/ --webroot; sleep 12h & wait $${!}; done;'"
