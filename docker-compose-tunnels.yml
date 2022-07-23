@@ -2,7 +2,7 @@ version: "3.7"
 services:
   nginx:
     container_name: nginx
-    restart: unless-stopped
+    restart: ${RESTART:-unless-stopped}
     hostname: ${DOMAIN_NAME:?err}
     volumes:
       - './http-root:/var/lib/nginx/html/http-root:ro'
@@ -26,13 +26,13 @@ services:
       - 22000:22000/tcp
       - 22000:22000/udp
       - 21027:21027/udp
-    restart: unless-stopped
+    restart: ${RESTART:-unless-stopped}
 
   cloudflared:
     image: erisamoe/cloudflared
     container_name: cloudflared
     command: --origincert /root/.cloudflared/cert.pem tunnel run --url http://nginx ${DOMAIN_NAME:?err}
-    restart: unless-stopped
+    restart: ${RESTART:-unless-stopped}
     volumes:
       - './data/cloudflared/etc:/etc/cloudflared'
       - './data/cloudflared/home:/root'

@@ -55,8 +55,8 @@ fi
 
 if [ "$USE_TUNNELS" != "true" ]; then
   docker-compose -f docker-compose.yml pull
-  docker-compose -f docker-compose.yml up ${COMPOSEFLAGS:-"-d"}
+  docker-compose -f docker-compose.yml up ${COMPOSEFLAGS-"-d"}
 else
   docker-compose -f docker-compose-tunnels.yml pull
-  docker-compose -f docker-compose-tunnels.yml up ${COMPOSEFLAGS:-"-d"}
+  docker-compose -f docker-compose-tunnels.yml up ${COMPOSEFLAGS-"-d"}
 fi
