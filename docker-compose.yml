@@ -2,7 +2,6 @@ version: "3.7"
 services:
   nginx:
     container_name: nginx
-    restart: ${RESTART:-unless-stopped}
     hostname: ${DOMAIN_NAME:?err}
     volumes:
       - './http-root:/var/lib/nginx/html/http-root:ro'
@@ -18,6 +17,7 @@ services:
       - '80:80'
       - '443:443'
     image: nginx
+    restart: ${RESTART:-unless-stopped}
 
   syncthing:
     image: linuxserver/syncthing
@@ -39,10 +39,10 @@ services:
 
   certbot:
     container_name: certbot
-    restart: ${RESTART:-unless-stopped}
     volumes:
       - './data/acme-webroot:/srv/http/webroot'
       - './data/letsencrypt/etc:/etc/letsencrypt'
       - './data/letsencrypt/var:/var/lib/letsencrypt'
     image: certbot/certbot:${LETSENCRYPT_TAG:-latest}
     entrypoint: "/bin/sh -c 'trap exit TERM; sleep 10; while :; do certbot renew -w /srv/http/webroot/ --webroot; sleep 12h & wait $${!}; done;'"
+    restart: ${RESTART:-unless-stopped}
