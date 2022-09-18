@@ -17,7 +17,6 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
     volumes:
         - './data/syncthing:/config'
         - './http-root/chaotic-aur:/repo'
