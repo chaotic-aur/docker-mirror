@@ -1,6 +1,7 @@
 version: "3.7"
 services:
   nginx:
+    image: nginx:mainline-alpine
     container_name: nginx
     hostname: ${DOMAIN_NAME:?err}
     volumes:
@@ -16,19 +17,17 @@ services:
     ports:
       - '80:80'
       - '443:443'
-    image: nginx
     restart: ${RESTART:-unless-stopped}
 
   syncthing:
-    image: linuxserver/syncthing
+    image: syncthing/syncthing:latest
     container_name: syncthing
     hostname: ${DOMAIN_NAME:?err}
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
     volumes:
-        - './data/syncthing:/config'
+        - './data/syncthing:/var/syncthing/config'
         - './http-root/chaotic-aur:/repo'
     ports:
       - '127.0.0.1:8384:8384'
@@ -38,11 +37,11 @@ services:
     restart: ${RESTART:-unless-stopped}
 
   certbot:
+    image: certbot/certbot:${LETSENCRYPT_TAG:-latest}
     container_name: certbot
     volumes:
       - './data/acme-webroot:/srv/http/webroot'
       - './data/letsencrypt/etc:/etc/letsencrypt'
       - './data/letsencrypt/var:/var/lib/letsencrypt'
-    image: certbot/certbot:${LETSENCRYPT_TAG:-latest}
     entrypoint: "/bin/sh -c 'trap exit TERM; sleep 10; while :; do certbot renew -w /srv/http/webroot/ --webroot; sleep 12h & wait $${!}; done;'"
     restart: ${RESTART:-unless-stopped}
