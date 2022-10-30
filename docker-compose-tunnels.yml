@@ -3,12 +3,12 @@ services:
   nginx:
     image: nginx:mainline-alpine
     container_name: nginx
-    restart: ${RESTART:-unless-stopped}
     hostname: ${DOMAIN_NAME:?err}
     volumes:
       - './http-root:/var/lib/nginx/html/http-root:ro'
       - './preset/nginx.conf:/etc/nginx/nginx.conf:ro'
       - './preset/conf.d-tunnels:/etc/nginx/conf.d:ro'
+    restart: ${RESTART:-unless-stopped}
 
   syncthing:
     image: syncthing/syncthing:latest
@@ -31,8 +31,8 @@ services:
     image: erisamoe/cloudflared:latest
     container_name: cloudflared
     command: --origincert /root/.cloudflared/cert.pem tunnel run --url http://nginx ${DOMAIN_NAME:?err}
-    restart: ${RESTART:-unless-stopped}
     volumes:
       - './data/cloudflared/etc:/etc/cloudflared'
       - './data/cloudflared/home:/root'
       - './preset/passwd:/etc/passwd'
+    restart: ${RESTART:-unless-stopped}
