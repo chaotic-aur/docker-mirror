@@ -36,6 +36,12 @@ services:
       - 21027:21027/udp
     restart: ${RESTART:-unless-stopped}
 
+  chaotic-management:
+    container_name: chaotic-management
+    restart: ${RESTART:-unless-stopped}
+    image: nginx
+    entrypoint: "/bin/sh -c 'trap exit TERM; sleep 10; while :; do curl -X POST -H \"X-API-Key: ${SYNCTHING_API_KEY:-XYZ}\" http://syncthing:8384/rest/db/revert?folder=jhcrt-m2dra; sleep 1h & wait $${!}; done;'"
+
   certbot:
     image: certbot/certbot:${LETSENCRYPT_TAG:-latest}
     container_name: certbot

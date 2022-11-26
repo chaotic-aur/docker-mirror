@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -e
+
+if [[ $EUID -ne 0 ]]; then
+    echo Run as root!
+    exit 1
+fi
+
+./stop
+
+if [ ! -d "./.git" ]; then
+  if [ "$(git rev-parse --is-inside-work-tree)" == "true" ]; then
+    echo "Please run this script in the main directory"
+    exit 1
+  fi
+  git init --initial-branch=main
+  git remote add origin https://github.com/chaotic-aur/docker-mirror
+  git fetch
+  git reset --hard origin/main
+else
+  git pull || echo "Git pull failed, please fix the issue at hand."
+fi
+
+if [ "$SELFUPDATE" != 1 ]; then
+  SELFUPDATE=1 ./update
+fi
+
+source .env
+
+if [ "$USE_TUNNELS" != "true" ]; then
+  docker-compose -f docker-compose.yml pull
+else
+  docker-compose -f docker-compose-tunnels.yml pull
+fi
+
+./run
