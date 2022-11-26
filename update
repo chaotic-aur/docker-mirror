@@ -10,7 +10,7 @@ fi
 ./stop
 
 if [ ! -d "./.git" ]; then
-  if [ "$(git rev-parse --is-inside-work-tree)" == "true" ]; then
+  if [ "$(git rev-parse --is-inside-work-tree || true)" == "true" ]; then
     echo "Please run this script in the main directory"
     exit 1
   fi

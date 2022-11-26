@@ -3,6 +3,7 @@
         <filesystemType>basic</filesystemType>
         <device id="ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY" introducedBy=""></device>
         <order>oldestFirst</order>
+        <minDiskFree unit="%">1</minDiskFree>
     </folder>
     <device id="ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY" name="builds.garudalinux.org" compression="metadata" introducer="true" skipIntroductionRemovals="false" introducedBy="">
         <address>tcp://builds.garudalinux.org</address>

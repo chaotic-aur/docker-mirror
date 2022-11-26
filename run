@@ -53,6 +53,22 @@ if [ ! -e ./data/syncthing/config.xml ]; then
   chown -R 1000:1000 ./data/syncthing
 fi
 
+gawk -i inplace '/<folder id="jhcrt-m2dra"/ {
+  begin = 1
+}
+/<minDiskFree unit="">0<\/minDiskFree>/ {
+  if (begin) {
+    print "        <minDiskFree unit=\"%\">1</minDiskFree>"
+    next
+  } else {
+    print
+  }
+}
+/<\/folder>/ {
+  begin = 0
+}
+1' ./data/syncthing/config.xml
+
 if [ "$USE_TUNNELS" != "true" ]; then
   docker-compose -f docker-compose.yml up ${COMPOSEFLAGS-"-d"}
 else
