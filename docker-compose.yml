@@ -40,7 +40,21 @@ services:
     container_name: chaotic-management
     restart: ${RESTART:-unless-stopped}
     image: nginx
-    entrypoint: "/bin/sh -c 'trap exit TERM; sleep 10; while :; do curl -X POST -H \"X-API-Key: ${SYNCTHING_API_KEY:-XYZ}\" http://syncthing:8384/rest/db/revert?folder=jhcrt-m2dra; sleep 1h & wait $${!}; done;'"
+    volumes:
+        - './data:/data'
+    entrypoint:
+        - /bin/sh
+        - -c
+        - |
+            trap exit TERM;
+            sleep 10;
+            while :; do
+                apikey="$(grep -oPm 1 '(?<=\<apikey\>).*(?=\</apikey\>)' /data/syncthing/config.xml)"
+                curl -X POST -H "X-API-Key: $$apikey" http://syncthing:8384/rest/db/revert?folder=jhcrt-m2dra;
+                sed -i -r '/<device id="ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY"/! s|(^ *<device .*id="[^"]+".*skipIntroductionRemovals="false".*introducedBy=")(">)|\1ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY\2|' /data/syncthing/config.xml
+                sleep 1h &
+                wait $${!};
+            done;
 
   certbot:
     image: certbot/certbot:${LETSENCRYPT_TAG:-latest}

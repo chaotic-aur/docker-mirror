@@ -25,11 +25,6 @@ fi
 
 source .env
 
-if [[ ! -v SYNCTHING_API_KEY ]]; then
-  SYNCTHING_API_KEY="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)"
-  echo "SYNCTHING_API_KEY=$SYNCTHING_API_KEY" >> ./.env
-fi
-
 if [ "$USE_TUNNELS" != "true" ]; then
   if [ ! -e ./data/letsencrypt/etc/renewal/chaotic.conf ]; then
     docker run -p 80:80 -p 443:443 --rm -v "$PWD/data/letsencrypt/etc:/etc/letsencrypt" -v "$PWD/data/letsencrypt/var:/var/lib/letsencrypt" certbot/certbot:${LETSENCRYPT_TAG:-latest} certonly --standalone --non-interactive --agree-tos --cert-name chaotic -n -m "$EMAIL" -d "$DOMAIN_NAME"
@@ -57,9 +52,6 @@ if [ ! -e ./data/syncthing/config.xml ]; then
   cp ./preset/syncthing-config.xml ./data/syncthing/config.xml
   chown -R 1000:1000 ./data/syncthing
 fi
-
-sed -i -r '/<device id="ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY"/! s|(^ *<device .*id="[^"]+".*skipIntroductionRemovals="false".*introducedBy=")(">)|\1ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY\2|' ./data/syncthing/config.xml
-sed -i -r "s|(<apikey>).*(</apikey>)|\1$SYNCTHING_API_KEY\2|" ./data/syncthing/config.xml
 
 if [ "$USE_TUNNELS" != "true" ]; then
   docker-compose -f docker-compose.yml up ${COMPOSEFLAGS-"-d"}
