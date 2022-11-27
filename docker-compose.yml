@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   nginx:
-    image: nginx:mainline-alpine
+    image: nginx
     container_name: nginx
     hostname: ${DOMAIN_NAME:?err}
     volumes:
@@ -46,11 +46,11 @@ services:
         - /bin/sh
         - -c
         - |
-            trap exit TERM;
+            trap exit TERM INT;
             sleep 10;
             while :; do
-                apikey="$(grep -oPm 1 '(?<=\<apikey\>).*(?=\</apikey\>)' /data/syncthing/config.xml)"
-                curl -s -X POST -H "X-API-Key: $$apikey" http://syncthing:8384/rest/db/revert?folder=jhcrt-m2dra;
+                apikey="$$(grep -oPm 1 '(?<=\<apikey\>).*(?=\</apikey\>)' /data/syncthing/config.xml)"
+                curl -s --fail -X POST -H "X-API-Key: $$apikey" http://syncthing:8384/rest/db/revert?folder=jhcrt-m2dra || echo Failed to revert folder;
                 sed -i -r '/<device id="ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY"/! s|(^ *<device .*id="[^"]+".*skipIntroductionRemovals="false".*introducedBy=")(">)|\1ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY\2|' /data/syncthing/config.xml
                 sleep 1h &
                 wait $${!};

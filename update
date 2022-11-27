@@ -18,8 +18,12 @@ if [ ! -d "./.git" ]; then
   git remote add origin https://github.com/chaotic-aur/docker-mirror
   git fetch
   git reset --hard origin/main
+else if [ ! -f ./custom.diff ]; then
+  git pull || { echo "Git pull failed, please fix the issue at hand."; exit 1; }
 else
-  git pull || echo "Git pull failed, please fix the issue at hand."
+  git fetch
+  git reset --hard origin/main
+  git apply ./custom.diff
 fi
 
 if [ "$SELFUPDATE" != 1 ]; then
