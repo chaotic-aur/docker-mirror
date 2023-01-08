@@ -33,9 +33,9 @@ fi
 source .env
 
 if [ "$USE_TUNNELS" != "true" ]; then
-  docker-compose -f docker-compose.yml pull
+  docker compose -f docker-compose.yml pull
 else
-  docker-compose -f docker-compose-tunnels.yml pull
+  docker compose -f docker-compose-tunnels.yml pull
 fi
 
 ./run
