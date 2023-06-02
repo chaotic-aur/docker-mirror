@@ -7,6 +7,28 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+function command_exists() {
+    builtin type -P "$1" &> /dev/null || eval "$1" &> /dev/null
+}
+
+# docker compose v2 is not a python package (`docker-compose`), 
+# but a reimplementation in Go (`docker compose`). 
+# Either of them works for us.
+POSSIBLE_DOCKER_COMPOSE=( "docker-compose" "docker compose" )
+
+for cmd in "${POSSIBLE_DOCKER_COMPOSE[@]}"; do
+    if command_exists "$cmd"; then
+        echo "'$cmd' exists, using that."
+        export DC_CMD="$cmd"
+        break
+    fi
+done
+
+if [[ -z "$DC_CMD" ]]; then
+    echo Docker compose doesn\'t seem to be installed.
+    exit 1
+fi
+
 if [ ! -e ./.env ]; then
   read -p 'Domain that will serve the mirror: ' domain
   echo "DOMAIN_NAME=$domain" > ./.env
@@ -30,9 +52,9 @@ if [ "$USE_TUNNELS" != "true" ]; then
     docker run -p 80:80 -p 443:443 --rm -v "$PWD/data/letsencrypt/etc:/etc/letsencrypt" -v "$PWD/data/letsencrypt/var:/var/lib/letsencrypt" certbot/certbot:${LETSENCRYPT_TAG:-latest} certonly --standalone --non-interactive --agree-tos --cert-name chaotic -n -m "$EMAIL" -d "$DOMAIN_NAME"
   fi
 elif [ ! -e "./data/cloudflared/home/.cloudflared/cert.pem" ]; then
-  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared login
-  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel create $DOMAIN_NAME
-  docker-compose -f docker-compose-tunnels.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel route dns $DOMAIN_NAME $DOMAIN_NAME
+  "$DC_CMD" -f docker-compose-tunnels.yml run --rm cloudflared login
+  "$DC_CMD" -f docker-compose-tunnels.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel create $DOMAIN_NAME
+  "$DC_CMD" -f docker-compose-tunnels.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel route dns $DOMAIN_NAME $DOMAIN_NAME
 fi
 
 if [ ! -e ./http-root/chaotic-aur ]; then
@@ -70,7 +92,7 @@ gawk -i inplace '/<folder id="jhcrt-m2dra"/ {
 1' ./data/syncthing/config.xml
 
 if [ "$USE_TUNNELS" != "true" ]; then
-  docker-compose -f docker-compose.yml up ${COMPOSEFLAGS-"-d"}
+  "$DC_CMD" -f docker-compose.yml up ${COMPOSEFLAGS-"-d"}
 else
-  docker-compose -f docker-compose-tunnels.yml up ${COMPOSEFLAGS-"-d"}
+  "$DC_CMD" -f docker-compose-tunnels.yml up ${COMPOSEFLAGS-"-d"}
 fi
