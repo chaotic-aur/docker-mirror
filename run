@@ -29,35 +29,50 @@ if [[ -z "$DC_CMD" ]]; then
     exit 1
 fi
 
+if [ -z "$COMPOSEFLAGS" ]; then
+  COMPOSEFLAGS=("-d" "--remove-orphans")
+fi
+
 if [ ! -e ./.env ]; then
   read -p 'Domain that will serve the mirror: ' domain
   echo "DOMAIN_NAME=$domain" > ./.env
-  read -p "Use cloudflare tunnels y/N " -n 1 -r
+  read -p "Automatically manage web server (letsencrypt, cloudflare tunnels) y/N " -n 1 -r
   echo
-  if [[ $REPLY =~ ^[Yy]$ ]]
-  then
-    USE_TUNNELS=true
-    echo "USE_TUNNELS=true" >> ./.env
-    echo "SSL_FILE=/dev/null" >> ./.env
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    read -p "Use cloudflare tunnels y/N " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]
+    then
+      echo "USE_TUNNELS=true" >> ./.env
+      echo "SSL_FILE=/dev/null" >> ./.env
+    else
+      read -p 'Your email address: ' email
+      echo "EMAIL=$email" >> ./.env
+    fi
   else
-    read -p 'Your email address: ' email
-    echo "EMAIL=$email" >> ./.env
+    read -p "Webroot path (optional): " -r webroot
+    if [ ! -z "$webroot" ]; then
+      echo "WEBROOT=$webroot" >> ./.env
+    fi
+    echo "NO_WEB=true" >> ./.env
   fi
 fi
 
 source .env
 
-if [ "$USE_TUNNELS" != "true" ]; then
+if [ "$USE_TUNNELS" == "true" ]; then
+  if [ ! -e "./data/cloudflared/home/.cloudflared/cert.pem" ]; then
+    "$DC_CMD" -f docker-compose.yml run --rm cloudflared login
+    "$DC_CMD" -f docker-compose.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel create $DOMAIN_NAME
+    "$DC_CMD" -f docker-compose.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel route dns $DOMAIN_NAME $DOMAIN_NAME
+  fi
+elif [ "$NO_WEB" != "true" ]; then
   if [ ! -e ./data/letsencrypt/etc/renewal/chaotic.conf ]; then
     docker run -p 80:80 -p 443:443 --rm -v "$PWD/data/letsencrypt/etc:/etc/letsencrypt" -v "$PWD/data/letsencrypt/var:/var/lib/letsencrypt" certbot/certbot:${LETSENCRYPT_TAG:-latest} certonly --standalone --non-interactive --agree-tos --cert-name chaotic -n -m "$EMAIL" -d "$DOMAIN_NAME"
   fi
-elif [ ! -e "./data/cloudflared/home/.cloudflared/cert.pem" ]; then
-  "$DC_CMD" -f docker-compose-tunnels.yml run --rm cloudflared login
-  "$DC_CMD" -f docker-compose-tunnels.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel create $DOMAIN_NAME
-  "$DC_CMD" -f docker-compose-tunnels.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel route dns $DOMAIN_NAME $DOMAIN_NAME
 fi
 
-if [ ! -e ./http-root/chaotic-aur ]; then
+if [ ! -e ./http-root/chaotic-aur ] && [ "$NO_WEB" != "true" ]; then
   # Convert legacy
   if [ -d ./repo ]; then
     ./stop
@@ -91,8 +106,14 @@ gawk -i inplace '/<folder id="jhcrt-m2dra"/ {
 }
 1' ./data/syncthing/config.xml
 
-if [ "$USE_TUNNELS" != "true" ]; then
-  "$DC_CMD" -f docker-compose.yml up ${COMPOSEFLAGS-"-d"}
+if [ ! -z "$UPDATE_IMAGES" ]; then
+  COMPOSEFLAGS+=("--pull" "always")
+fi
+
+if [ "$NO_WEB" == "true" ]; then
+  "$DC_CMD" up "${COMPOSEFLAGS[@]}"
+elif [ "$USE_TUNNELS" == "true" ]; then
+  "$DC_CMD" --profile cloudflared up "${COMPOSEFLAGS[@]}"
 else
-  "$DC_CMD" -f docker-compose-tunnels.yml up ${COMPOSEFLAGS-"-d"}
+  "$DC_CMD" --profile letsencrypt up "${COMPOSEFLAGS[@]}"
 fi

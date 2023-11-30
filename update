@@ -30,12 +30,4 @@ if [ "$SELFUPDATE" != 1 ]; then
   SELFUPDATE=1 ./update
 fi
 
-source .env
-
-if [ "$USE_TUNNELS" != "true" ]; then
-  docker-compose -f docker-compose.yml pull
-else
-  docker-compose -f docker-compose-tunnels.yml pull
-fi
-
-./run
+UPDATE_IMAGES=true ./run
