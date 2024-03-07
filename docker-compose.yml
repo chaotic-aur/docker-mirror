@@ -2,7 +2,7 @@ version: "3.7"
 services:
   nginx-letsencrypt:
     image: nginx
-    container_name: nginx
+    container_name: nginx-letsencrypt
     hostname: ${DOMAIN_NAME:?err}
     volumes:
       - './http-root:/var/lib/nginx/html/http-root:ro'
@@ -23,7 +23,7 @@ services:
 
   nginx-cloudflared:
     image: nginx
-    container_name: nginx
+    container_name: nginx-cloudflared
     hostname: ${DOMAIN_NAME:?err}
     volumes:
       - './http-root:/var/lib/nginx/html/http-root:ro'
