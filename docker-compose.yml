@@ -89,7 +89,7 @@ services:
   cloudflared:
     image: erisamoe/cloudflared:latest
     container_name: cloudflared
-    command: --origincert /root/.cloudflared/cert.pem tunnel run --url http://nginx ${DOMAIN_NAME:?err}
+    command: --origincert /root/.cloudflared/cert.pem tunnel run --url http://nginx-cloudflared ${DOMAIN_NAME:?err}
     volumes:
       - './data/cloudflared/etc:/etc/cloudflared'
       - './data/cloudflared/home:/root'
