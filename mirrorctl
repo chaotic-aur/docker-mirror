@@ -14,7 +14,7 @@ function command_exists() {
 # docker compose v2 is not a python package (`docker-compose`),
 # but a reimplementation in Go (`docker compose`).
 # Either of them works for us.
-POSSIBLE_DOCKER_COMPOSE=("docker-compose" "docker compose")
+POSSIBLE_DOCKER_COMPOSE=("docker compose" "docker-compose")
 for cmd in "${POSSIBLE_DOCKER_COMPOSE[@]}"; do
 	if command_exists "$cmd"; then
 		echo "'$cmd' exists, using that."
