@@ -31,7 +31,6 @@ function run() {
 			echo
 			if [[ $REPLY =~ ^[Yy]$ ]]; then
 				echo "USE_TUNNELS=true" >>./.env
-				echo "SSL_FILE=/dev/null" >>./.env
 			else
 				read -r -p 'Your email address: ' email
 				echo "EMAIL=$email" >>./.env
@@ -85,24 +84,8 @@ function run() {
 		chown -R 1000:1000 ./data/syncthing
 	fi
 
-	gawk -i inplace '/<folder id="jhcrt-m2dra"/ {
-    begin = 1
-  }
-  /<minDiskFree unit="">0<\/minDiskFree>/ {
-    if (begin) {
-      print "        <minDiskFree unit=\"%\">1</minDiskFree>"
-      next
-    } else {
-      print
-    }
-  }
-  /<\/folder>/ {
-    begin = 0
-  }
-  1' ./data/syncthing/config.xml
-
 	if [ -n "$UPDATE_IMAGES" ]; then
-		COMPOSE_FLAGS+=("--pull" "always")
+		COMPOSE_FLAGS+=("--pull" "always" "--build")
 	fi
 
 	if [ "$NO_WEB" == "true" ]; then

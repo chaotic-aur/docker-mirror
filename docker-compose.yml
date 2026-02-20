@@ -51,7 +51,7 @@ services:
       - cloudflared
 
   syncthing:
-    image: syncthing/syncthing:latest
+    build: ./syncthing-custom
     container_name: syncthing
     hostname: ${DOMAIN_NAME:?err}
     environment:
@@ -66,26 +66,6 @@ services:
       - 22000:22000/udp
       - 21027:21027/udp
     restart: ${RESTART:-unless-stopped}
-
-  chaotic-management:
-    container_name: chaotic-management
-    restart: ${RESTART:-unless-stopped}
-    image: nginx
-    volumes:
-        - './data:/data'
-    entrypoint:
-        - /bin/sh
-        - -c
-        - |
-            trap exit TERM INT;
-            sleep 10;
-            while :; do
-                apikey="$$(grep -oPm 1 '(?<=\<apikey\>).*(?=\</apikey\>)' /data/syncthing/config.xml)"
-                curl -s --fail -X POST -H "X-API-Key: $$apikey" http://syncthing:8384/rest/db/revert?folder=jhcrt-m2dra || echo Failed to revert folder;
-                sed -i -r '/<device id="ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY"/! s|(^ *<device .*id="[^"]+".*skipIntroductionRemovals="false".*introducedBy=")(">)|\1ZDHVMSP-EW4TMWX-DBH2W4P-HV5A6OY-BBEFABO-QTENANJ-RJ6GKNX-6KCG7QY\2|' /data/syncthing/config.xml
-                sleep 1h &
-                wait $${!};
-            done;
 
   cloudflared:
     image: erisamoe/cloudflared:latest

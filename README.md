@@ -1,5 +1,5 @@
 # Chaotic-AUR mirror Docker setup
-This repo provides an easy to way to set up a new Chaotic-AUR mirror. This will deploy Syncthing for syncing the repo and Nginx as webserver.
+This repo provides an easy way to set up a new Chaotic-AUR mirror. This will deploy Syncthing for syncing the repo and Nginx as webserver.
 The following steps need to be taken:
 ```
 sudo pacman -Syu docker docker-compose
