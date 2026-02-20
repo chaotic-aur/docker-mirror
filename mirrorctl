@@ -113,7 +113,9 @@ function run() {
 }
 
 function update() {
-	stop
+	if [ -f ./.env ]; then
+		stop
+	fi
 
 	if [ ! -d "./.git" ]; then
 		if [ "$(git rev-parse --is-inside-work-tree || true)" == "true" ]; then
