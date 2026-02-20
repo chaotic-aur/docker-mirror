@@ -11,21 +11,8 @@ function command_exists() {
 	builtin type -P "$1" &>/dev/null || eval "$1" &>/dev/null
 }
 
-# docker compose v2 is not a python package (`docker-compose`),
-# but a reimplementation in Go (`docker compose`).
-# Either of them works for us.
-POSSIBLE_DOCKER_COMPOSE=("docker compose" "docker-compose")
-for cmd in "${POSSIBLE_DOCKER_COMPOSE[@]}"; do
-	if command_exists "$cmd"; then
-		echo "'$cmd' exists, using that."
-		read -r -a DC_CMD <<<"$cmd"
-		break
-	fi
-done
-
-if [[ ${#DC_CMD[@]} -eq 0 ]]; then
-	echo Docker compose doesn\'t seem to be installed.
-	exit 1
+if ! docker compose --version &>/dev/null; then
+	echo "Docker compose v2 doesn't seem to be installed."
 fi
 
 if [ -z "$COMPOSEFLAGS" ]; then
@@ -33,7 +20,7 @@ if [ -z "$COMPOSEFLAGS" ]; then
 fi
 
 function stop() {
-	"${DC_CMD[@]}" --profile cloudflared --profile letsencrypt down
+	docker compose --profile cloudflared --profile letsencrypt down
 }
 
 function run() {
@@ -65,14 +52,16 @@ function run() {
 
 	if [ "$USE_TUNNELS" == "true" ]; then
 		if [ ! -e "./data/cloudflared/home/.cloudflared/cert.pem" ]; then
-			"${DC_CMD[@]}" -f docker-compose.yml run --rm cloudflared login
-			"${DC_CMD[@]}" -f docker-compose.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel create "$DOMAIN_NAME"
-			"${DC_CMD[@]}" -f docker-compose.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel route dns "$DOMAIN_NAME" "$DOMAIN_NAME"
+			docker compose -f docker-compose.yml run --rm cloudflared login
+			docker compose -f docker-compose.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel create "$DOMAIN_NAME"
+			docker compose -f docker-compose.yml run --rm cloudflared --origincert /root/.cloudflared/cert.pem tunnel route dns "$DOMAIN_NAME" "$DOMAIN_NAME"
 		fi
 	elif [ "$NO_WEB" != "true" ]; then
-		if [ ! -e ./data/letsencrypt/etc/renewal/chaotic.conf ]; then
-			# shellcheck disable=SC2153
-			docker run -p 80:80 -p 443:443 --rm -v "$PWD/data/letsencrypt/etc:/etc/letsencrypt" -v "$PWD/data/letsencrypt/var:/var/lib/letsencrypt" certbot/certbot:"${LETSENCRYPT_TAG:-latest}" certonly --standalone --non-interactive --agree-tos --cert-name chaotic -n -m "$EMAIL" -d "$DOMAIN_NAME"
+		# Create ACME state directory for nginx ACME module
+		if [ ! -d "./data/acme-letsencrypt" ]; then
+			mkdir -p ./data/acme-letsencrypt
+			# nginx container runs as user 101 (nginx user)
+			chown -R 101:101 ./data/acme-letsencrypt
 		fi
 	fi
 
@@ -115,11 +104,11 @@ function run() {
 	fi
 
 	if [ "$NO_WEB" == "true" ]; then
-		"${DC_CMD[@]}" up "${COMPOSE_FLAGS[@]}"
+		docker compose up "${COMPOSE_FLAGS[@]}"
 	elif [ "$USE_TUNNELS" == "true" ]; then
-		"${DC_CMD[@]}" --profile cloudflared up "${COMPOSE_FLAGS[@]}"
+		docker compose --profile cloudflared up "${COMPOSE_FLAGS[@]}"
 	else
-		"${DC_CMD[@]}" --profile letsencrypt up "${COMPOSE_FLAGS[@]}"
+		docker compose --profile letsencrypt up "${COMPOSE_FLAGS[@]}"
 	fi
 }
 
@@ -147,7 +136,7 @@ function update() {
 	fi
 
 	if [ "$SELFUPDATE" != 1 ]; then
-		SELFUPDATE=1 update
+		exec SELFUPDATE=1 update
 	fi
 
 	UPDATE_IMAGES=true run
