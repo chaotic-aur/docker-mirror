@@ -1,0 +1,8 @@
+acme_shared_zone zone=ngx_acme_shared:1M;
+
+acme_issuer letsencrypt {
+    uri https://acme-v02.api.letsencrypt.org/directory;
+    contact ${EMAIL};
+    state_path /var/lib/nginx/acme-letsencrypt;
+    accept_terms_of_service;
+}

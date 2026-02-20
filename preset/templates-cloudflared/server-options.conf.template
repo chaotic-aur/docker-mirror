@@ -1,0 +1,3 @@
+server_name ${DOMAIN_NAME};
+
+# No SSL needed, handled by cloudflared
