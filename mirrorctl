@@ -7,15 +7,12 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-function command_exists() {
-	builtin type -P "$1" &>/dev/null || eval "$1" &>/dev/null
-}
-
 if ! docker compose --version &>/dev/null; then
 	echo "Docker compose v2 doesn't seem to be installed."
+	exit 1
 fi
 
-if [ -z "$COMPOSEFLAGS" ]; then
+if [ -z "$COMPOSE_FLAGS" ]; then
 	COMPOSE_FLAGS=("-d" "--remove-orphans")
 fi
 
@@ -65,12 +62,17 @@ function run() {
 		fi
 	fi
 
-	if [ ! -e ./http-root/chaotic-aur ] && [ "$NO_WEB" != "true" ]; then
+	if [ ! -d ./http-root/chaotic-aur ]; then
 		# Convert legacy
 		if [ -d ./repo ]; then
-			stop
-			mkdir ./http-root
-			mv ./repo ./http-root/chaotic-aur
+			if [ "$NO_WEB" != "true" ]; then
+				stop
+				mkdir ./http-root
+				mv ./repo ./http-root/chaotic-aur
+			fi
+		elif [ -n "$WEBROOT" ]; then
+			mkdir -p "$WEBROOT"/chaotic-aur/.stfolder
+			chown -R 1000:1000 "$WEBROOT"/chaotic-aur/
 		else
 			mkdir -p ./http-root/chaotic-aur/.stfolder
 			chown -R 1000:1000 ./http-root/chaotic-aur/
@@ -138,7 +140,7 @@ function update() {
 	fi
 
 	if [ "$SELFUPDATE" != 1 ]; then
-		exec SELFUPDATE=1 update
+		SELFUPDATE=1 exec ./mirrorctl update
 	fi
 
 	UPDATE_IMAGES=true run
