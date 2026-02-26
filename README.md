@@ -14,6 +14,6 @@ You will be asked for:
 
 After that, docker compose will fetch the needed containers. Syncthing will be available at port 8384 locally only, while the mirror can be reached using the domain name. 
 Syncthing devices need to be confirmed by us. YOU WILL NOT BE CONFIRMED WITHOUT GETTING IN TOUCH WITH US FIRST!!
-Then, create a new issue or get in touch on telegram at the [packages repo](https://github.com/chaotic-aur/packages/issues/new/choose) to have the mirror added to mirrorlist and geo-mirror. 
+Then, create a new issue or get in touch on Telegram to have the mirror added to mirrorlist and geo-mirror. 
 
 Questions left? Feel free to create an issue or join the Telegram group to ask them! :)  
