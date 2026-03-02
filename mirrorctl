@@ -17,7 +17,7 @@ if [ -z "$COMPOSE_FLAGS" ]; then
 fi
 
 function stop() {
-	docker compose --profile cloudflared --profile letsencrypt down
+	docker compose --profile cloudflared --profile letsencrypt --profile nossl down
 }
 
 function run() {
@@ -32,8 +32,20 @@ function run() {
 			if [[ $REPLY =~ ^[Yy]$ ]]; then
 				echo "USE_TUNNELS=true" >>./.env
 			else
-				read -r -p 'Your email address: ' email
-				echo "EMAIL=$email" >>./.env
+				read -p "Do you want to use LetsEncrypt for SSL certificates? Port 80 and 443 will be mandatory. y/N " -n 1 -r
+				echo
+				if [[ $REPLY =~ ^[Yy]$ ]]; then
+					read -r -p 'Your email address: ' email
+					echo "EMAIL=$email" >>./.env
+				else
+					echo "NO_SSL=true" >>./.env
+					read -p "Enter port to serve the mirror (default 80): " -r port
+					if [ -n "$port" ]; then
+						echo "NGINX_PORT=$port" >>./.env
+					else
+						echo "NGINX_PORT=80" >>./.env
+					fi
+				fi
 			fi
 		else
 			read -p "Webroot path (optional): " -r webroot
@@ -92,6 +104,8 @@ function run() {
 		docker compose up "${COMPOSE_FLAGS[@]}"
 	elif [ "$USE_TUNNELS" == "true" ]; then
 		docker compose --profile cloudflared up "${COMPOSE_FLAGS[@]}"
+	elif [ "$NO_SSL" == "true" ]; then
+		docker compose --profile nossl up "${COMPOSE_FLAGS[@]}"
 	else
 		docker compose --profile letsencrypt up "${COMPOSE_FLAGS[@]}"
 	fi

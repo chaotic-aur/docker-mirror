@@ -50,6 +50,31 @@ services:
     profiles:
       - cloudflared
 
+  nginx:
+    image: nginx
+    container_name: nginx-nossl
+    hostname: ${DOMAIN_NAME:?err}
+    volumes:
+      - './http-root:/var/lib/nginx/html/http-root:ro'
+      - './preset/nginx.conf:/etc/nginx/nginx.conf:ro'
+      # Static
+      - './preset/conf.d/chaotic.conf:/etc/nginx/conf.d/chaotic.conf:ro'
+      - './preset/conf.d/status.conf:/etc/nginx/conf.d/status.conf:ro'
+      - './preset/conf.d/style.xslt:/etc/nginx/conf.d/style.xslt:ro'
+      # Templates
+      - './preset/templates-cloudflared:/etc/nginx/templates:ro'
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    labels:
+      com.datadoghq.ad.check_names: '["nginx"]'
+      com.datadoghq.ad.init_configs: '[{}]'
+      com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
+    ports:
+      - '${NGINX_PORT}:80'
+    restart: ${RESTART:-unless-stopped}
+    profiles:
+      - nossl
+
   syncthing:
     build: ./syncthing-custom
     container_name: syncthing
