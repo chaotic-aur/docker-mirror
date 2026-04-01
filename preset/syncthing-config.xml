@@ -15,5 +15,5 @@
     </gui>
     <options>
         <connectionLimitEnough>4</connectionLimitEnough>
-    </option>
+    </options>
 </configuration>
