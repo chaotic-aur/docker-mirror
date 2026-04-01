@@ -13,4 +13,7 @@
     <gui enabled="true" tls="false" debugging="false">
         <apikey></apikey>
     </gui>
+    <options>
+        <connectionLimitEnough>4</connectionLimitEnough>
+    </option>
 </configuration>

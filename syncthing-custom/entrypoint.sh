@@ -10,6 +10,10 @@ fix_min_disk_free() {
     xmlstarlet ed -L -u '//minDiskFree[@unit=""]/@unit' -v "%" "$CONFIG_FILE"
 }
 
+set_max_connections() {
+    xmlstarlet ed -L -u '//connectionLimitEnough[text()="0"]' -v "4" "$CONFIG_FILE"
+}
+
 remove_unauthorized_devices() {
     # Delete all devices with missing or empty introducedBy that are not the master
     xmlstarlet ed -L -d "//device[(not(@introducedBy) or @introducedBy='') and @id!='$MASTER_DEVICE_ID']" "$CONFIG_FILE"
@@ -34,6 +38,7 @@ revert_loop() {
 if [ -f "$CONFIG_FILE" ]; then
     fix_min_disk_free
     remove_unauthorized_devices
+    set_max_connections
 fi
 
 revert_loop &
