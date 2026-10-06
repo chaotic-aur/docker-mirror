@@ -76,7 +76,9 @@ services:
       - nossl
 
   syncthing:
-    build: ./syncthing-custom
+    build:
+      context: ./syncthing-custom
+      pull: true
     container_name: syncthing
     hostname: ${DOMAIN_NAME:?err}
     environment:
